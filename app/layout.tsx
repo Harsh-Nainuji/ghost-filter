@@ -7,8 +7,22 @@ import './globals.css'
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist' })
 const mono = Geist_Mono({ subsets: ['latin'], variable: '--font-mono' })
 
-export const metadata: Metadata = { title: 'GhostFilter — See what text is really doing', description: 'A transparent text analyzer for hidden persuasion signals.', generator: 'v0.app' }
-export const viewport: Viewport = { colorScheme: 'dark', themeColor: '#0f0f0f', userScalable: false }
+export const metadata: Metadata = { 
+  title: 'GhostFilter — Advanced Job Posting & Ghost Role Analysis Engine', 
+  description: 'A transparent, privacy-first rules-based engine that scans job posting metadata to determine probability of ghost listings.',
+  icons: {
+    icon: [
+      { url: '/favicon/favicon.ico' },
+      { url: '/favicon/favicon-96x96.png', sizes: '96x96', type: 'image/png' },
+      { url: '/favicon/favicon.svg', type: 'image/svg+xml' },
+    ],
+    apple: [
+      { url: '/favicon/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
+  manifest: '/favicon/site.webmanifest',
+}
+export const viewport: Viewport = { colorScheme: 'dark', themeColor: '#0a0c0c', userScalable: false }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (

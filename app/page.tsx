@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ArrowRight, Search, ShieldCheck, Clock, Lock } from 'lucide-react'
 import { Shell } from '@/components/site-shell'
 import { useEffect, useState } from 'react'
+import { InteractiveHero } from '@/components/interactive-hero'
 
 export default function Page() {
   const [totalChecks, setTotalChecks] = useState(0)
@@ -18,9 +19,12 @@ export default function Page() {
   return (
     <Shell>
       <main className="relative overflow-hidden">
+        {/* Atmospheric Subtle Background Blur Accent */}
+        <div className="pointer-events-none absolute top-12 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-accent/5 blur-[120px] rounded-full z-0" />
+
         {/* Hero Section */}
-        <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16 sm:py-28">
-          <div className="grid gap-12 lg:grid-cols-[1fr_0.8fr] lg:items-center">
+        <section className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-12 sm:py-24">
+          <div className="grid gap-12 lg:grid-cols-[1fr_0.9fr] lg:items-center">
             <div>
               <div 
                 className="animate-fade-in-up-stagger mb-6 flex items-center gap-3 font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-accent" 
@@ -60,22 +64,8 @@ export default function Page() {
               </div>
             </div>
             
-            <div className="hidden lg:block animate-fade-in-up-stagger interactive-card border border-border bg-card p-6 rounded-lg shadow-sm" style={{ animationDelay: '320ms' }}>
-              <div className="mb-4 flex items-center justify-between border-b border-border pb-4">
-                <span className="font-mono text-[10px] tracking-widest text-muted-foreground">SYSTEM.STATUS</span>
-                <span className="flex items-center gap-2 font-mono text-[10px] text-accent"><span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" /> OPERATIONAL</span>
-              </div>
-              <div className="space-y-4 font-mono text-xs text-muted-foreground">
-                <div className="flex justify-between"><span className="opacity-50">SIGNALS_LOADED:</span> <span className="text-foreground font-normal">08</span></div>
-                <div className="flex justify-between"><span className="opacity-50">CHECKS_PERFORMED:</span> <span className="text-foreground font-normal">{totalChecks > 0 ? totalChecks.toLocaleString() : '1,200+'}</span></div>
-                <div className="flex justify-between"><span className="opacity-50">HEURISTIC_CONFIDENCE:</span> <span className="text-foreground font-normal">85%</span></div>
-                <div className="mt-4 border-t border-border pt-4">
-                  <span className="block opacity-50 mb-2">LAST_DETECTED_RISK:</span>
-                  <div className="flex items-center gap-2 text-amber-400 font-normal">
-                    <ShieldCheck size={12} /> MODERATE PROBABILITY
-                  </div>
-                </div>
-              </div>
+            <div className="animate-fade-in-up-stagger" style={{ animationDelay: '320ms' }}>
+              <InteractiveHero totalChecks={totalChecks} />
             </div>
           </div>
         </section>
