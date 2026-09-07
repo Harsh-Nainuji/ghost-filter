@@ -77,8 +77,8 @@ export default function HistoryPage() {
           <ArrowLeft size={12} /> BACK TO DASHBOARD
         </Link>
 
-        {/* Page Header */}
-        <div className="mb-10 border-b border-border pb-6 flex flex-wrap items-end justify-between gap-4">
+        {/* Page Header - Step 8 Target */}
+        <div data-tutorial="outcome" className="mb-10 border-b border-border pb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent">Personal Hiring Dataset</p>
             <h1 className="mt-2 text-2xl sm:text-4xl font-semibold tracking-tight">Application Outcome History</h1>

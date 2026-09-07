@@ -1,8 +1,13 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowUpRight } from 'lucide-react'
+import { ArrowUpRight, Sparkles } from 'lucide-react'
+import { TutorialProvider, useTutorial } from '@/components/tutorial/tutorial-provider'
 
 export function SiteHeader() { 
+  const { startTutorial } = useTutorial()
+
   return (
     <header className="border-b border-border/80 bg-background/80 backdrop-blur-md sticky top-0 z-40">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4">
@@ -12,10 +17,20 @@ export function SiteHeader() {
           </div>
           <span className="tracking-[0.18em]">GHOSTFILTER</span>
         </Link>
-        <nav className="flex items-center gap-4 sm:gap-8 font-mono text-[10px] sm:text-[11px] tracking-[0.15em] text-muted-foreground">
+
+        <nav className="flex items-center gap-4 sm:gap-6 font-mono text-[10px] sm:text-[11px] tracking-[0.15em] text-muted-foreground">
           <Link href="/check" className="px-2 py-1.5 transition-colors hover:text-accent font-medium">CHECK JOB</Link>
-          <Link href="/history" className="px-2 py-1.5 transition-colors hover:text-accent font-medium">HISTORY</Link>
+          <Link href="/history" data-tutorial="history" className="px-2 py-1.5 transition-colors hover:text-accent font-medium">HISTORY</Link>
           <Link href="/privacy" className="px-2 py-1.5 transition-colors hover:text-accent font-medium hidden sm:block">PRIVACY</Link>
+
+          <button
+            onClick={startTutorial}
+            className="flex items-center gap-1.5 border border-border bg-card/60 px-2.5 py-1 rounded text-accent hover:border-accent/40 transition-colors font-medium text-[10px]"
+            title="Start Guided Product Walkthrough"
+          >
+            <Sparkles size={11} />
+            <span>WALKTHROUGH</span>
+          </button>
         </nav>
       </div>
     </header>
@@ -23,13 +38,18 @@ export function SiteHeader() {
 }
 
 export function SiteFooter() { 
+  const { startTutorial } = useTutorial()
+
   return (
     <footer className="border-t border-border/80 bg-background">
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 sm:px-6 lg:px-8 py-8 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <span className="font-mono text-[10px] tracking-[0.15em] text-muted-foreground/70">
-          GHOSTFILTER // HEURISTIC DIAGNOSTIC v1.1
+          GHOSTFILTER // HEURISTIC DIAGNOSTIC v2.0
         </span>
-        <div className="flex gap-6 font-mono text-[10px] tracking-wider">
+        <div className="flex items-center gap-6 font-mono text-[10px] tracking-wider">
+          <button onClick={startTutorial} className="hover:text-accent transition-colors flex items-center gap-1 text-accent">
+            <Sparkles size={11} /> RESTART TUTORIAL
+          </button>
           <Link href="/privacy" className="hover:text-accent transition-colors">PRIVACY POLICY</Link>
           <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-accent transition-colors">
             OPEN SOURCE <ArrowUpRight size={11} />
@@ -42,10 +62,12 @@ export function SiteFooter() {
 
 export function Shell({ children }: { children: React.ReactNode }) { 
   return (
-    <div className="flex min-h-screen flex-col">
-      <SiteHeader />
-      <div className="flex-1">{children}</div>
-      <SiteFooter />
-    </div>
+    <TutorialProvider>
+      <div className="flex min-h-screen flex-col">
+        <SiteHeader />
+        <div className="flex-1">{children}</div>
+        <SiteFooter />
+      </div>
+    </TutorialProvider>
   ) 
 }
