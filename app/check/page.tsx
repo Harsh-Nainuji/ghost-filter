@@ -1,250 +1,306 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowLeft, Save, Check } from 'lucide-react'
+import { ArrowLeft, Save, Check, Sparkles, SlidersHorizontal, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { Shell } from '@/components/site-shell'
-import { ScoreMeter } from '@/components/score-meter'
-import { SignalRow } from '@/components/signal-row'
-import { calculateGhostScore } from '@/lib/algorithm'
+import { ScoreOverview } from '@/components/score-overview'
+import { EvidenceReport } from '@/components/evidence-report'
+import { evaluateJobPosting } from '@/lib/engine'
 import { saveJob } from '@/lib/storage'
-import type { GhostScoreResult, JobFormInput, StoredJob } from '@/types'
+import type { ScoreBreakdown, JobFormInput, StoredJob } from '@/types'
 
-const initial: JobFormInput = { jobTitle: '', companyName: '', platform: 'linkedin', postingAge: 'unknown', salaryMentioned: 'no', applicationMethod: [], reposted: 'not-sure', companySize: 'unknown', description: '' }
-const labels = { platform: 'Platform', postingAge: 'Days Since Posted', applicationMethod: 'Application Method', companySize: 'Company Size' }
-const options = { platform: [['linkedin','LinkedIn'],['indeed','Indeed'],['naukri','Naukri'],['company-website','Company website'],['other','Other']], postingAge: [['today','Today'],['this-week','This week'],['two-to-four-weeks','2 to 4 weeks'],['one-to-two-months','1 to 2 months'],['over-two-months','Over 2 months'],['unknown','Unknown']], applicationMethod: [['external-ats','External ATS'],['company-website','Company website'],['easy-apply','Easy Apply'],['email-only','Email only'],['no-clear-method','No clear method']], companySize: [['1-10','1-10 employees'],['11-50','11-50 employees'],['51-200','51-200 employees'],['201-1000','201-1000 employees'],['1000+','1000+ employees'],['unknown','Unknown']] }
+const initialForm: JobFormInput = {
+  jobUrl: '',
+  jobTitle: '',
+  companyName: '',
+  platform: 'linkedin',
+  postingAge: 'unknown',
+  salaryMentioned: 'unknown',
+  applicationMethod: [],
+  reposted: 'not-sure',
+  companySize: 'unknown',
+  description: '',
+  contactInfo: '',
+}
 
 export default function CheckPage() {
-  const [form, setForm] = useState(initial)
-  const [result, setResult] = useState<GhostScoreResult | null>(null)
+  const [form, setForm] = useState<JobFormInput>(initialForm)
+  const [breakdown, setBreakdown] = useState<ScoreBreakdown | null>(null)
   const [saved, setSaved] = useState(false)
-  const [showDisclaimer, setShowDisclaimer] = useState(true)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [scanProgress, setScanProgress] = useState(0)
-  const [scanStep, setScanStep] = useState('INITIALIZING SCAN...')
+  const [scanStep, setScanStep] = useState('PARSING TEXT & METADATA...')
+  const [showAdvanced, setShowAdvanced] = useState(false)
 
   const update = (key: keyof JobFormInput, value: any) => setForm((current) => ({ ...current, [key]: value }))
-  
-  const run = () => { 
-    if (!form.jobTitle.trim() || !form.companyName.trim()) return
+
+  const runAnalysis = () => {
+    // Requires either description or job title or URL
+    if (!form.description.trim() && !form.jobTitle.trim() && !form.jobUrl?.trim()) return
+
     setIsAnalyzing(true)
-    setResult(null)
+    setBreakdown(null)
     setSaved(false)
-    setScanProgress(15)
-    setScanStep('INITIALIZING SCAN...')
+    setScanProgress(20)
+    setScanStep('PARSING JOB DESCRIPTION & STRUCTURE...')
 
     setTimeout(() => {
-      setScanProgress(55)
-      setScanStep('EVALUATING HEURISTIC SIGNALS...')
-    }, 500)
+      setScanProgress(60)
+      setScanStep('EVALUATING GHOST, SCAM & QUALITY SIGNALS...')
+    }, 450)
 
     setTimeout(() => {
       setScanProgress(90)
-      setScanStep('COMPUTING RISK INDEX...')
-    }, 1100)
+      setScanStep('GENERATING PLAIN-ENGLISH VERDICT...')
+    }, 900)
 
     setTimeout(() => {
       setScanProgress(100)
-      const res = calculateGhostScore(form)
-      setResult(res)
+      const res = evaluateJobPosting(form)
+      setBreakdown(res)
       setIsAnalyzing(false)
-    }, 1500)
+    }, 1200)
   }
-  
-  const save = () => { 
-    if (!result) return
+
+  const handleSave = () => {
+    if (!breakdown) return
     const job: StoredJob = {
       id: crypto.randomUUID(),
-      jobTitle: form.jobTitle,
-      companyName: form.companyName,
+      jobTitle: form.jobTitle.trim() || 'Analyzed Job Requisition',
+      companyName: form.companyName.trim() || 'Unspecified Company',
       platform: form.platform,
-      totalScore: result.totalScore,
-      riskLevel: result.riskLevel,
-      signals: result.signals,
-      status: 'not-applied',
+      ghostRisk: breakdown.ghostRisk,
+      scamRisk: breakdown.scamRisk,
+      jobQuality: breakdown.jobQuality,
+      verdict: breakdown.verdict,
+      evidence: breakdown.allEvidence,
+      status: 'saved',
       checkedAt: new Date().toISOString(),
-      formInput: form
+      formInput: form,
+      url: form.jobUrl,
     }
     saveJob(job)
     setSaved(true)
   }
 
+  const isFormValid = form.description.trim().length > 10 || form.jobTitle.trim().length > 2 || (form.jobUrl && form.jobUrl.trim().length > 5)
+
   return (
     <Shell>
       <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
-        <Link href="/" className="mb-8 flex w-fit items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground hover:text-accent transition-colors">
+        <Link 
+          href="/" 
+          className="mb-8 flex w-fit items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground hover:text-accent transition-colors"
+        >
           <ArrowLeft size={12} /> BACK TO DASHBOARD
         </Link>
+
+        {/* Page Header */}
         <div className="mb-10 border-b border-border pb-6">
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent">Analysis Engine v1.1</p>
-          <h1 className="mt-3 text-2xl sm:text-3xl font-semibold tracking-tight">Job Verification Scan</h1>
-          <p className="mt-3 text-xs sm:text-sm leading-relaxed text-muted-foreground max-w-xl">Provide the available metadata for the job posting below. The engine will evaluate the data against known ghost job heuristics to estimate legitimacy.</p>
+          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-accent mb-2">
+            <ShieldCheck size={14} /> GHOSTFILTER ENGINE V2.0
+          </div>
+          <h1 className="text-2xl sm:text-4xl font-semibold tracking-tight text-foreground">
+            Job Posting Risk & Quality Scan
+          </h1>
+          <p className="mt-2 text-xs sm:text-sm leading-relaxed text-muted-foreground max-w-xl">
+            Paste the job posting description or URL below. The V2 engine independently calculates Ghost Risk, Scam Risk, and Job Quality with zero penalty for missing parameters.
+          </p>
         </div>
-        
-        <div className="grid gap-8 lg:grid-cols-[1fr_0.85fr]">
-          <section className="interactive-card rounded-lg border border-border bg-card p-5 sm:p-8 shadow-sm">
-            <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="Job Title" required>
-                <input value={form.jobTitle} onChange={(e) => update('jobTitle', e.target.value)} className="field" placeholder="e.g. Software Engineer" />
-              </Field>
-              <Field label="Company Name" required>
-                <input value={form.companyName} onChange={(e) => update('companyName', e.target.value)} className="field" placeholder="e.g. Acme Corp" />
-              </Field>
-              <Field label={labels.platform}>
-                <select value={form.platform} onChange={(e) => update('platform', e.target.value)} className="field">
-                  {options.platform.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                </select>
-              </Field>
-              <Field label={labels.postingAge}>
-                <select value={form.postingAge} onChange={(e) => update('postingAge', e.target.value)} className="field">
-                  {options.postingAge.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                </select>
-              </Field>
-              <Field label={labels.companySize}>
-                <select value={form.companySize} onChange={(e) => update('companySize', e.target.value)} className="field">
-                  {options.companySize.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                </select>
-              </Field>
-              <ToggleMulti label={labels.applicationMethod} values={options.applicationMethod} selected={form.applicationMethod} onChange={(v) => update('applicationMethod', v)} />
-              <Toggle label="Is salary mentioned?" value={form.salaryMentioned} values={['yes','no']} onChange={(v) => update('salaryMentioned', v)} />
-              <Toggle label="Is this reposted?" value={form.reposted} values={['no','not-sure','yes']} onChange={(v) => update('reposted', v)} />
+
+        <div className="grid gap-8 lg:grid-cols-[1fr_1.1fr]">
+          {/* Form Input Section */}
+          <section className="interactive-card rounded-xl border border-border bg-card p-5 sm:p-7 shadow-sm space-y-6">
+            {/* Primary Input 1: Job Description */}
+            <div>
+              <label className="block text-xs font-mono text-muted-foreground uppercase tracking-wider mb-2">
+                Paste Job Description <span className="text-accent">*</span>
+              </label>
+              <textarea
+                value={form.description}
+                onChange={(e) => update('description', e.target.value)}
+                placeholder="Paste full job description text here. Our text analyzer extracts duties, qualifications, salary ranges, and scam patterns automatically..."
+                className="field min-h-44 resize-y text-xs leading-relaxed"
+              />
             </div>
-            
-            <div className="mt-6">
-              <Field label="Job Description (optional but recommended)">
-                <textarea 
-                  value={form.description} 
-                  onChange={(e) => update('description', e.target.value)} 
-                  placeholder="Paste the full job description. We scan it for vague language and word count automatically." 
-                  className="field min-h-36 resize-y leading-relaxed" 
+
+            {/* Primary Input 2: Job Listing URL */}
+            <div>
+              <label className="block text-xs font-mono text-muted-foreground uppercase tracking-wider mb-2">
+                Job Posting URL (Optional)
+              </label>
+              <input
+                value={form.jobUrl || ''}
+                onChange={(e) => update('jobUrl', e.target.value)}
+                placeholder="https://linkedin.com/jobs/view/..."
+                className="field text-xs"
+              />
+            </div>
+
+            {/* Quick Context Inputs */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1.5">
+                  Job Title
+                </label>
+                <input
+                  value={form.jobTitle}
+                  onChange={(e) => update('jobTitle', e.target.value)}
+                  placeholder="e.g. Senior Software Engineer"
+                  className="field text-xs"
                 />
-              </Field>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1.5">
+                  Company Name
+                </label>
+                <input
+                  value={form.companyName}
+                  onChange={(e) => update('companyName', e.target.value)}
+                  placeholder="e.g. Acme Corp"
+                  className="field text-xs"
+                />
+              </div>
             </div>
-            
-            <button 
-              onClick={run} 
-              disabled={!form.jobTitle.trim() || !form.companyName.trim() || isAnalyzing}
-              className="btn-hover-lift mt-8 w-full min-h-[48px] rounded-[6px] bg-accent px-4 py-3.5 font-mono text-xs font-bold tracking-[0.2em] text-accent-foreground hover:bg-accent/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+
+            {/* Toggle Advanced Supporting Metadata */}
+            <div className="border-t border-border/60 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground hover:text-accent transition-colors"
+              >
+                <SlidersHorizontal size={12} />
+                <span>{showAdvanced ? 'HIDE SUPPORTING METADATA' : 'ADD SUPPORTING METADATA (OPTIONAL)'}</span>
+              </button>
+
+              {showAdvanced && (
+                <div className="mt-4 grid gap-4 sm:grid-cols-2 pt-2 animate-fade-in-scale">
+                  <div>
+                    <label className="block text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1.5">
+                      Posting Platform
+                    </label>
+                    <select value={form.platform} onChange={(e) => update('platform', e.target.value)} className="field text-xs">
+                      <option value="linkedin">LinkedIn</option>
+                      <option value="indeed">Indeed</option>
+                      <option value="naukri">Naukri</option>
+                      <option value="company-website">Company Website</option>
+                      <option value="other">Other Platform</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1.5">
+                      Days Active / Posting Age
+                    </label>
+                    <select value={form.postingAge} onChange={(e) => update('postingAge', e.target.value)} className="field text-xs">
+                      <option value="unknown">Unknown / Not Sure (0 penalty)</option>
+                      <option value="today">Posted Today</option>
+                      <option value="this-week">Posted This Week</option>
+                      <option value="two-to-four-weeks">2 to 4 Weeks Ago</option>
+                      <option value="one-to-two-months">1 to 2 Months Ago</option>
+                      <option value="over-two-months">Over 2 Months Ago</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1.5">
+                      Is Salary Disclosed?
+                    </label>
+                    <select value={form.salaryMentioned} onChange={(e) => update('salaryMentioned', e.target.value)} className="field text-xs">
+                      <option value="unknown">Unspecified (0 penalty)</option>
+                      <option value="yes">Yes - Salary Mentioned</option>
+                      <option value="no">No - Salary Omitted</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1.5">
+                      Is This Reposted?
+                    </label>
+                    <select value={form.reposted} onChange={(e) => update('reposted', e.target.value)} className="field text-xs">
+                      <option value="not-sure">Unsure / Unverified (0 penalty)</option>
+                      <option value="no">No - Original Post</option>
+                      <option value="yes">Yes - Reposted Listing</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Submit Button */}
+            <button
+              onClick={runAnalysis}
+              disabled={!isFormValid || isAnalyzing}
+              className="btn-hover-lift w-full min-h-[48px] rounded-lg bg-accent px-4 py-3.5 font-mono text-xs font-bold tracking-[0.2em] text-accent-foreground hover:bg-accent/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {isAnalyzing ? 'SCAN IN PROGRESS...' : 'RUN GHOST CHECK'}
+              <Sparkles size={14} />
+              {isAnalyzing ? 'RUNNING DIAGNOSTIC SCAN...' : 'LAUNCH GHOST & SCAM CHECK'}
             </button>
           </section>
 
+          {/* Results Output Section */}
           {isAnalyzing ? (
-            <section className="interactive-card rounded-lg border border-border bg-card p-6 sm:p-8 shadow-sm flex flex-col justify-center items-center min-h-[480px]">
+            <section className="interactive-card rounded-xl border border-border bg-card p-6 sm:p-8 shadow-sm flex flex-col justify-center items-center min-h-[480px]">
               <div className="w-full max-w-sm flex flex-col items-center">
-                <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full border border-accent/40 bg-accent/10 font-mono text-accent animate-pulse-subtle">
+                <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full border border-accent/40 bg-accent/10 font-mono text-accent animate-pulse">
                   ⚡
                 </div>
-                <p className="font-mono text-xs uppercase tracking-[0.2em] text-accent mb-2">{scanStep}</p>
+                <p className="font-mono text-xs uppercase tracking-[0.2em] text-accent mb-2 text-center">{scanStep}</p>
                 <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden mt-3">
                   <div 
                     className="h-full bg-accent transition-all ease-out duration-300 rounded-full" 
                     style={{ width: `${scanProgress}%` }}
                   />
                 </div>
-                <p className="font-mono text-[10px] text-muted-foreground/60 tracking-widest mt-4">DIAGNOSTIC SCAN ACTIVE</p>
+                <p className="font-mono text-[10px] text-muted-foreground/60 tracking-widest mt-4">V2 DIAGNOSTIC PIPELINE</p>
               </div>
             </section>
-          ) : result ? (
-            <section className="animate-fade-in-scale interactive-card rounded-lg border border-border bg-card p-5 sm:p-8 shadow-sm flex flex-col h-full">
-              <div className="flex items-start justify-between border-b border-border pb-6 mb-6">
-                <div>
-                  <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">SYSTEM DIAGNOSTIC</p>
-                  <p className="mt-1.5 text-lg sm:text-xl font-semibold">
-                    {result.riskLevel === 'low' ? 'Low Risk Detected' : result.riskLevel === 'moderate' ? 'Moderate Risk Detected' : result.riskLevel === 'high' ? 'High Risk Detected' : 'Critical Risk Detected'}
-                  </p>
-                </div>
-                <button 
-                  onClick={save} 
+          ) : breakdown ? (
+            <section className="animate-fade-in-scale space-y-6">
+              {/* Header Action Bar */}
+              <div className="flex items-center justify-between border-b border-border pb-4">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                  SCAN COMPLETE // 3 SCORES COMPUTED
+                </span>
+
+                <button
+                  onClick={handleSave}
                   disabled={saved}
-                  className={`flex items-center gap-1.5 font-mono text-[10px] tracking-widest transition-colors min-h-[36px] px-2.5 rounded border border-border/40 ${saved ? 'text-teal-400 border-teal-500/30' : 'text-accent hover:border-accent/40'}`}
+                  className={`flex items-center gap-1.5 font-mono text-[10px] tracking-widest transition-colors min-h-[36px] px-3 rounded border ${
+                    saved ? 'text-teal-400 border-teal-500/40 bg-teal-400/10' : 'text-accent border-accent/40 hover:bg-accent/10'
+                  }`}
                 >
-                  {saved ? <Check size={13} /> : <Save size={13} />} 
-                  {saved ? 'SAVED' : 'SAVE'}
+                  {saved ? <Check size={13} /> : <Save size={13} />}
+                  {saved ? 'SAVED TO HISTORY' : 'SAVE TO HISTORY'}
                 </button>
               </div>
-              
-              <div className="mb-8 flex justify-center">
-                <ScoreMeter score={result.totalScore} signalsCount={result.signals.length} />
-              </div>
-              
-              <div className="grid gap-0 flex-1 content-start border-t border-border pt-2">
-                {result.signals.map((signal, idx) => (
-                  <SignalRow key={signal.name} signal={signal} delay={idx * 60} />
-                ))}
-              </div>
 
-              {showDisclaimer && (
-                <div className="mt-6 bg-muted/40 border border-border/80 rounded-md p-4 flex gap-3 relative animate-fade-in-scale" style={{ animationDelay: '500ms', animationFillMode: 'both' }}>
-                  <button onClick={() => setShowDisclaimer(false)} className="absolute top-2 right-2 text-muted-foreground hover:text-foreground text-sm">&times;</button>
-                  <p className="text-xs leading-relaxed text-muted-foreground/80 pr-4">
-                    <strong>Disclaimer:</strong> This ghost score is a statistical heuristic. It estimates probability based on industry patterns and does not guarantee job post status.
-                  </p>
-                </div>
-              )}
+              {/* 3 Independent Scores Overview */}
+              <ScoreOverview 
+                ghostRisk={breakdown.ghostRisk} 
+                scamRisk={breakdown.scamRisk} 
+                jobQuality={breakdown.jobQuality} 
+              />
+
+              {/* Evidence & Verdict Report */}
+              <EvidenceReport breakdown={breakdown} />
             </section>
           ) : (
-            <section className="flex min-h-[480px] flex-col items-center justify-center rounded-lg border border-dashed border-border p-8 text-center bg-card/40">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-border font-mono text-lg text-muted-foreground bg-muted/30">?</div>
+            <section className="flex min-h-[480px] flex-col items-center justify-center rounded-xl border border-dashed border-border p-8 text-center bg-card/30">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-border font-mono text-lg text-muted-foreground bg-muted/30">
+                ?
+              </div>
               <p className="font-mono text-xs uppercase tracking-[0.15em] text-foreground">SYSTEM READY</p>
-              <p className="mt-2 max-w-xs text-xs sm:text-sm leading-relaxed text-muted-foreground">Fill out the parameters and launch the scan to generate a diagnostic risk assessment.</p>
+              <p className="mt-2 max-w-xs text-xs sm:text-sm leading-relaxed text-muted-foreground">
+                Paste the job description or listing details on the left and run the scan to evaluate Ghost Risk, Scam Risk, and Job Quality.
+              </p>
             </section>
           )}
         </div>
       </main>
     </Shell>
-  )
-}
-
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) { 
-  return (
-    <label className="block text-sm">
-      <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">{label}{required ? ' *' : ''}</span>
-      <span className="mt-2 block">{children}</span>
-    </label> 
-  ) 
-}
-
-function Toggle({ label, value, values, onChange }: { label: string; value: string; values: string[]; onChange: (value: string) => void }) { 
-  return (
-    <div>
-      <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">{label}</span>
-      <div className="mt-2 flex gap-2">
-        {values.map((item) => (
-          <button 
-            type="button" 
-            key={item} 
-            onClick={() => onChange(item)} 
-            className={`flex-1 rounded-[6px] border px-2 py-2 font-mono text-xs capitalize transition-colors ${value === item ? 'border-accent bg-accent/10 text-accent' : 'border-border text-muted-foreground hover:bg-muted/30'}`}
-          >
-            {item.replace('-', ' ')}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function ToggleMulti({ label, values, selected, onChange }: { label: string; values: string[][]; selected: string[]; onChange: (values: string[]) => void }) { 
-  return (
-    <div className="col-span-full">
-      <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">{label}</span>
-      <div className="mt-2 flex flex-wrap gap-2">
-        {values.map(([val, itemLabel]) => {
-          const isSelected = selected.includes(val);
-          return (
-            <button 
-              type="button" 
-              key={val} 
-              onClick={() => onChange(isSelected ? selected.filter(v => v !== val) : [...selected, val])} 
-              className={`rounded-[6px] border px-3 py-2 font-mono text-xs transition-colors ${isSelected ? 'border-accent bg-accent/10 text-accent' : 'border-border text-muted-foreground hover:bg-muted/30'}`}
-            >
-              {itemLabel}
-            </button>
-          )
-        })}
-      </div>
-    </div>
   )
 }

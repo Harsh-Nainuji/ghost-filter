@@ -1,4 +1,5 @@
 'use client'
+
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 import type { StoredJob } from '@/types'
 
@@ -11,15 +12,16 @@ export function ScoreChart({ jobs }: { jobs: StoredJob[] }) {
   ]
 
   jobs.forEach(job => {
-    if (job.totalScore <= 25) buckets[0].count++
-    else if (job.totalScore <= 50) buckets[1].count++
-    else if (job.totalScore <= 75) buckets[2].count++
+    const score = job.ghostRisk ?? job.totalScore ?? 0
+    if (score <= 25) buckets[0].count++
+    else if (score <= 50) buckets[1].count++
+    else if (score <= 75) buckets[2].count++
     else buckets[3].count++
   })
 
   return (
     <div className="h-[300px] w-full rounded-lg border border-border bg-card p-8 shadow-sm flex flex-col">
-      <h3 className="mb-6 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Risk Distribution</h3>
+      <h3 className="mb-6 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Ghost Risk Distribution</h3>
       <div className="flex-1 min-h-0">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={buckets} margin={{ top: 10, right: 10, bottom: 20, left: -20 }}>
