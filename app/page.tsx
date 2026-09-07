@@ -16,6 +16,15 @@ export default function Page() {
     if (checks) {
       setTotalChecks(parseInt(checks, 10))
     }
+
+    // Auto-start tutorial on first visit
+    const tutorialSeen = localStorage.getItem('ghostfilter_tutorial_seen')
+    if (!tutorialSeen) {
+      const timer = setTimeout(() => {
+        setShowTutorial(true)
+      }, 500)
+      return () => clearTimeout(timer)
+    }
   }, [])
 
   return (

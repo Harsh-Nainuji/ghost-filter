@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ArrowLeft, Save, Check, Sparkles, SlidersHorizontal, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { Shell } from '@/components/site-shell'
 import { ScoreOverview } from '@/components/score-overview'
 import { EvidenceReport } from '@/components/evidence-report'
+import { InteractiveTutorial } from '@/components/interactive-tutorial'
 import { evaluateJobPosting } from '@/lib/engine'
 import { saveJob } from '@/lib/storage'
 import type { ScoreBreakdown, JobFormInput, StoredJob } from '@/types'
@@ -32,6 +33,7 @@ export default function CheckPage() {
   const [scanProgress, setScanProgress] = useState(0)
   const [scanStep, setScanStep] = useState('PARSING TEXT & METADATA...')
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [showTutorial, setShowTutorial] = useState(false)
 
   const update = (key: keyof JobFormInput, value: any) => setForm((current) => ({ ...current, [key]: value }))
 
@@ -89,12 +91,28 @@ export default function CheckPage() {
   return (
     <Shell>
       <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
-        <Link 
-          href="/" 
-          className="mb-8 flex w-fit items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground hover:text-accent transition-colors"
-        >
-          <ArrowLeft size={12} /> BACK TO DASHBOARD
-        </Link>
+        <InteractiveTutorial 
+          isOpen={showTutorial} 
+          onClose={() => setShowTutorial(false)} 
+          onLoadSample={(sampleText) => update('description', sampleText)}
+        />
+
+        <div className="flex items-center justify-between mb-8">
+          <Link 
+            href="/" 
+            className="flex w-fit items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground hover:text-accent transition-colors"
+          >
+            <ArrowLeft size={12} /> BACK TO DASHBOARD
+          </Link>
+
+          <button
+            onClick={() => setShowTutorial(true)}
+            className="flex items-center gap-1.5 font-mono text-[10px] tracking-wider uppercase border border-border bg-card/60 px-3 py-1.5 rounded text-accent hover:border-accent/40 transition-colors"
+          >
+            <Sparkles size={12} />
+            <span>GUIDED TOUR</span>
+          </button>
+        </div>
 
         {/* Page Header */}
         <div className="mb-10 border-b border-border pb-6">
