@@ -8,8 +8,14 @@ export function calculateGhostScore(input: JobFormInput): GhostScoreResult {
   incrementChecks()
   const breakdown = evaluateJobPosting(input)
 
-  const legacyRiskLevel: RiskLevel = 
-    breakdown.ghostRisk <= 25 ? 'low' : breakdown.ghostRisk <= 50 ? 'moderate' : breakdown.ghostRisk <= 75 ? 'high' : 'very-high'
+  const legacyRiskLevel: RiskLevel =
+    breakdown.ghostRisk <= 25
+      ? 'low'
+      : breakdown.ghostRisk <= 50
+      ? 'moderate'
+      : breakdown.ghostRisk <= 75
+      ? 'high'
+      : 'very-high'
 
   const legacySignals: SignalResult[] = breakdown.allEvidence.map((ev) => ({
     name: ev.name,

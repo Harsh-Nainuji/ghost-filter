@@ -18,7 +18,7 @@ const initialForm: JobFormInput = {
   platform: 'linkedin',
   postingAge: 'unknown',
   salaryMentioned: 'unknown',
-  applicationMethod: [],
+  applicationMethod: 'unknown',
   reposted: 'not-sure',
   companySize: 'unknown',
   description: '',
@@ -203,7 +203,7 @@ function CheckPageContent() {
 
                 <div>
                   <label className="block text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1.5">
-                    Days Active / Posting Age
+                    Posting Age
                   </label>
                   <select value={form.postingAge} onChange={(e) => update('postingAge', e.target.value)} className="field text-xs">
                     <option value="unknown">Unknown / Not Sure (0 penalty)</option>
@@ -211,7 +211,8 @@ function CheckPageContent() {
                     <option value="this-week">Posted This Week</option>
                     <option value="two-to-four-weeks">2 to 4 Weeks Ago</option>
                     <option value="one-to-two-months">1 to 2 Months Ago</option>
-                    <option value="over-two-months">Over 2 Months Ago</option>
+                    <option value="over-two-months">Over 2 Months Ago (60–90 days)</option>
+                    <option value="three-months-plus">Over 3 Months Ago (90+ days)</option>
                   </select>
                 </div>
 
@@ -221,8 +222,24 @@ function CheckPageContent() {
                   </label>
                   <select value={form.salaryMentioned} onChange={(e) => update('salaryMentioned', e.target.value)} className="field text-xs">
                     <option value="unknown">Unspecified (0 penalty)</option>
-                    <option value="yes">Yes - Salary Mentioned</option>
-                    <option value="no">No - Salary Omitted</option>
+                    <option value="yes">Yes — Salary Mentioned</option>
+                    <option value="no">No — Salary Omitted</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1.5">
+                    How to Apply
+                  </label>
+                  <select value={form.applicationMethod} onChange={(e) => update('applicationMethod', e.target.value)} className="field text-xs">
+                    <option value="unknown">Unknown (0 penalty)</option>
+                    <option value="company-careers-page">Company Careers Page</option>
+                    <option value="external-ats">External ATS (Greenhouse, Lever, Workday…)</option>
+                    <option value="easy-apply">Easy Apply / One-Click</option>
+                    <option value="email-only">Email Only</option>
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="telegram">Telegram</option>
+                    <option value="other">Other</option>
                   </select>
                 </div>
 
@@ -231,10 +248,23 @@ function CheckPageContent() {
                     Is This Reposted?
                   </label>
                   <select value={form.reposted} onChange={(e) => update('reposted', e.target.value)} className="field text-xs">
-                    <option value="not-sure">Unsure / Unverified (0 penalty)</option>
-                    <option value="no">No - Original Post</option>
-                    <option value="yes">Yes - Reposted Listing</option>
+                    <option value="not-sure">Unsure / Unverified</option>
+                    <option value="no">No — Original Post</option>
+                    <option value="yes">Yes — Reposted Once</option>
+                    <option value="persistent">Yes — Repeatedly Reposted</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1.5">
+                    Recruiter / Contact Info (Optional)
+                  </label>
+                  <input
+                    value={form.contactInfo || ''}
+                    onChange={(e) => update('contactInfo', e.target.value)}
+                    placeholder="e.g. recruiter@company.com or Telegram handle"
+                    className="field text-xs"
+                  />
                 </div>
               </div>
             )}
