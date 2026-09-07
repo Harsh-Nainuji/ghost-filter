@@ -7,7 +7,7 @@ import { Shell } from '@/components/site-shell'
 import { ScoreOverview } from '@/components/score-overview'
 import { EvidenceReport } from '@/components/evidence-report'
 import { useTutorial } from '@/components/tutorial/tutorial-provider'
-import { evaluateJobPosting } from '@/lib/engine'
+import { evaluateJobPosting } from '@/lib/algorithm'
 import { saveJob } from '@/lib/storage'
 import type { ScoreBreakdown, JobFormInput, StoredJob } from '@/types'
 

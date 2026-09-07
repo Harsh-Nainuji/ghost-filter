@@ -1,14 +1,11 @@
-/**
- * GhostFilter V2 — Job Description Text Parser
- *
- * Extracts structural signals from raw job posting text.
- * All analysis is purely local and deterministic — no external APIs.
- *
- * Key rules:
- * - Missing information produces Unknown state, never a penalty.
- * - Vague language strength is evaluated proportionally to useful content.
- * - Title quality is evaluated on meaningful content, not character count.
- */
+// GhostFilter V2 - Job Description Text Parser
+// Extracts structural signals from raw job posting text.
+// All analysis is purely local and deterministic - no external APIs.
+//
+// Key rules:
+// - Missing information produces Unknown state, never a penalty.
+// - Vague language strength is evaluated proportionally to useful content.
+// - Title quality is evaluated on meaningful content, not character count.
 
 export interface TitleQuality {
   /** 0-10 score for the job title */
